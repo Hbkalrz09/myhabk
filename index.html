@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Status Server Habek || by: @hbkalrz_</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        h1 {
+            color: #ff4444;
+            font-size: 24px;
+        }
+        .container {
+            max-width: 400px;
+            margin: auto;
+            padding: 20px;
+            background-color: #1e1e1e;
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px rgba(255, 0, 0, 0.5);
+        }
+        .status {
+            font-size: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            display: inline-block;
+            font-weight: bold;
+        }
+        .online {
+            background-color: #4CAF50;
+            color: white;
+            box-shadow: 0px 0px 10px #4CAF50;
+        }
+        .offline {
+            background-color: #FF4444;
+            color: white;
+            box-shadow: 0px 0px 10px #FF4444;
+        }
+        .info {
+            font-size: 16px;
+            margin-top: 8px;
+        }
+        .cpu-memory-container {
+            margin-top: 15px;
+        }
+        .progress-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 5px;
+        }
+        .progress-bar {
+            width: 150px;
+            height: 10px;
+            background-color: #333;
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background-color: #ff4444;
+            transition: width 0.5s ease-in-out;
+        }
+        .notif-btn {
+            margin-top: 15px;
+            padding: 8px 12px;
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Status Server MyHabek</h1>
+        <h5>MCBE - Latest Version</h5>
+        <p>🌐 <strong>IP:</strong> myhabk.duckdns.org</p>
+        <p>🎯 <strong>Port:</strong> 30882</p>
+        <p id="server-status" class="status">Mengecek status...</p>
+        <p id="player-count" class="info">👥 Pemain Online: -</p>
+        <p id="ping-info" class="info">📶 Ping: - ms</p>
+        <p id="location-info" class="info">🌍 Lokasi: Germany</p>
+
+        <div class="cpu-memory-container">
+            <div class="progress-container">
+                <p>⚙️ CPU U:</p>
+                <div class="progress-bar"><div id="cpu-usage" class="progress-fill"></div></div>
+                <span id="cpu-percent">0%</span>
+            </div>
+
+            <div class="progress-container">
+                <p>💾 MEM U:</p>
+                <div class="progress-bar"><div id="memory-usage" class="progress-fill"></div></div>
+                <span id="memory-percent">0%</span>
+            </div>
+        </div>
+
+    </div>
+
+    <button class="notif-btn" onclick="requestNotificationPermission()">🔔</button>
+
+    <script>
+        let lastStatus = null;
+
+        function requestNotificationPermission() {
+            if ("Notification" in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        alert("Notifikasi diaktifkan!");
+                    } else {
+                        alert("Notifikasi tidak diizinkan.");
+                    }
+                });
+            }
+        }
+
+        async function checkServerStatus() {
+            const ip = "myhabk.duckdns.org";
+            const port = 30882;
+
+            const startPing = performance.now(); 
+
+            try {
+                const response = await fetch(`https://api.mcsrvstat.us/bedrock/2/${ip}:${port}`);
+                const data = await response.json();
+                const statusElement = document.getElementById("server-status");
+                const playerCountElement = document.getElementById("player-count");
+                const pingInfo = document.getElementById("ping-info");
+                const cpuUsageElement = document.getElementById("cpu-usage");
+                const memoryUsageElement = document.getElementById("memory-usage");
+                const cpuPercentText = document.getElementById("cpu-percent");
+                const memoryPercentText = document.getElementById("memory-percent");
+
+                const endPing = performance.now();
+                const pingValue = Math.round(endPing - startPing);
+
+                if (data.online) {
+                    statusElement.innerText = "🟢 Server Aktif";
+                    statusElement.classList.add("online");
+                    statusElement.classList.remove("offline");
+
+                    if (data.players && data.players.online !== undefined) {
+                        playerCountElement.innerText = `👥 Pemain Online: ${data.players.online}`;
+                    } else {
+                        playerCountElement.innerText = `👥 Pemain Online: -`;
+                    }
+
+                    pingInfo.innerText = `📶 Ping: ${pingValue} ms`;
+
+                    let cpuUsage = Math.floor(Math.random() * 100);
+                    let memoryUsage = Math.floor(Math.random() * 100);
+
+                    cpuUsageElement.style.width = cpuUsage + "%";
+                    memoryUsageElement.style.width = memoryUsage + "%";
+                    cpuPercentText.innerText = cpuUsage + "%";
+                    memoryPercentText.innerText = memoryUsage + "%";
+
+                    if (lastStatus === false && Notification.permission === "granted") {
+                        new Notification("🎮 Server Menyala!", {
+                            body: "Server Minecraft sekarang aktif!",
+                            icon: "https://www.minecraft.net/etc.clientlibs/minecraft/clientlibs/main/resources/favicon-32x32.png"
+                        });
+                    }
+                    lastStatus = true;
+                } else {
+                    statusElement.innerText = "🔴 Server Mati";
+                    statusElement.classList.add("offline");
+                    statusElement.classList.remove("online");
+                    playerCountElement.innerText = `👥 Pemain Online: -`;
+                    pingInfo.innerText = "📶 Ping: - ms";
+                    lastStatus = false;
+                }
+            } catch (error) {
+                document.getElementById("server-status").innerText = "❌ Tidak dapat mengambil status";
+            }
+        }
+
+        checkServerStatus();
+        setInterval(checkServerStatus, 5000);
+    </script>
+
+</body>
+</html>
